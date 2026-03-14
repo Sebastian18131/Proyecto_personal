@@ -1,0 +1,131 @@
+import Checkbox from '@/Components/Checkbox';
+import InputError from '@/Components/InputError';
+import InputLabel from '@/Components/InputLabel';
+import PrimaryButton from '@/Components/PrimaryButton';
+import TextInput from '@/Components/TextInput';
+import GuestLayout from '@/Layouts/GuestLayout';
+import { Head, Link, router, useForm } from '@inertiajs/react';
+import { XMarkIcon } from "@heroicons/react/24/outline";
+import PasswordResetModal from "@/Components/PasswordResetModal.jsx";
+import { toast } from 'sonner';
+import { usePage } from '@inertiajs/react';
+
+import { useEffect } from 'react';
+
+export default function Login({ status, canResetPassword }) {
+    const { data, setData, post, processing, errors, reset } = useForm({
+        email: '',
+        password: '',
+        remember: false,
+    });
+
+    const { props } = usePage();
+
+    useEffect(() => {
+        if (status) {
+            toast.info(status);
+            props.status = null;
+        }
+    }, [status, props]);
+
+
+    const submit = (e) => {
+        e.preventDefault();
+
+        if (!data.email || !data.password) {
+            toast.error("Por favor complete todos los campos");
+            return;
+        }
+
+        let toastId;
+
+        post(route('login'), {
+            onStart: () => {
+                toastId = toast.loading("Verificando información");
+            },
+            onError: (errors) => {
+                if (toastId) toast.dismiss(toastId);
+                if (errors.email) {
+                    toast.error("Correo o contraseña incorrectos");
+                } else if (errors.password) {
+                    toast.error("Ingrese una contraseña válida");
+                } else {
+                    toast.error("Error en el ingreso al sistema");
+                }
+            },
+            onFinish: () => {
+                reset('password')
+                if (toastId) toast.dismiss(toastId);
+            }
+        });
+    };
+
+    return (
+        <GuestLayout>
+            <Head title="Log in" />
+
+            {status && (
+                <div></div>
+            )}
+
+            <form onSubmit={submit}>
+                <h1 className={"text-xl text-primary-content font-bold text-center"}>Iniciar Sesión</h1>
+                <div>
+                    <InputLabel htmlFor="email" value="Email" />
+
+                    <TextInput
+                        id="email"
+                        type="email"
+                        name="email"
+                        value={data.email}
+                        className="mt-1 block w-full outline-none"
+                        autoComplete="username"
+                        isFocused={true}
+                        onChange={(e) => setData('email', e.target.value)}
+                    />
+
+                    <InputError message={errors.email} className="mt-2" />
+                </div>
+
+                <div className="mt-4">
+                    <InputLabel htmlFor="password" value="Contraseña" />
+
+                    <TextInput
+                        id="password"
+                        type="password"
+                        name="password"
+                        value={data.password}
+                        className="mt-1 block w-full outline-none"
+                        autoComplete="current-password"
+                        onChange={(e) => setData('password', e.target.value)}
+                    />
+
+                    <InputError message={errors.password} className="mt-2" />
+                </div>
+
+                <a
+                    href="#"
+                    className="text-sm text-primary hover:underline cursor-pointer"
+                    onClick={() => document.getElementById('reset_modal').showModal()}
+                >
+                    ¿Olvidaste tu contraseña?
+                </a>
+
+                <div className={"flex justify-center my-4"}>
+
+                    <PrimaryButton className="ms-2 w-full cursor-pointer" disabled={processing}>
+                        Iniciar Sesion
+                    </PrimaryButton>
+
+                    <Link
+                        href={route("register")}
+                        className="block text-center ms-2 bg-transparent border border-primary text-primary  px-4 py-2 text-xs font-semibold rounded-md w-full cursor-pointer"
+                        disabled={processing}>
+                        Registrarse
+                    </Link>
+                </div>
+            </form>
+            <PasswordResetModal />
+        </GuestLayout>
+    );
+}
