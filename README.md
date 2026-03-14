@@ -27,7 +27,8 @@ Proyecto backend y frontend para la gestión documental y manejo de PQRS, desarr
 - [Tecnologías utilizadas](#tecnologías-utilizadas)
 - [Herramientas de desarrollo (DevDependencies)](#herramientas-de-desarrollo-devdependencies)
 - [Scripts principales](#scripts-principales)
-- [Api EndPoints](#api)  
+- [Api EndPoints](#api)
+- [📖 Wiki del Proyecto (Documentación Detallada)](./WIKI.md)  
 
 ## Descripción del proyecto 
 # ROLES
