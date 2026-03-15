@@ -26,6 +26,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/search', [FolderController::class, 'globalSearch']);
 
 
+    // Get the electronic index of documents
+    Route::get('/folders/electronic-index', [FolderController::class, 'electronicIndex']);
+
     // Get all folders in the system (used for selectors or trees)
     Route::get('/folders-all', [FolderController::class, 'getAllFolders']);
 
@@ -133,6 +136,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Listar todas las PQRs
     Route::get('/pqrs', [PQRController::class, 'index']);
+
+    // ----------- Excel Reports -------------
+    Route::get('/reports/excel', [\App\Http\Controllers\ExcelController::class, 'export']);
 
     // ----------- Editprofile -------------
 

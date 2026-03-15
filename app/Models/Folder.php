@@ -13,6 +13,8 @@ class Folder extends Model
         'name',
         'parent_id',
         'active',
+        'year',
+        'is_closed',
         'folder_code',
         'department',
         'sheet_number_id',

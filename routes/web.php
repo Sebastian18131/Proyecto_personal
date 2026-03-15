@@ -89,7 +89,15 @@ Route::middleware('auth')->group(function () {
         ->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])
         ->name('profile.destroy');
+
 });
+
+// Ruta pública para responder PQRs (Carga Comunication.jsx)
+Route::get('/pqr/responder/{uuid}', function ($uuid) {
+    return Inertia::render('Comunication', [
+        'pqrID' => $uuid
+    ]);
+})->name('pqr.respond');
 
 
 

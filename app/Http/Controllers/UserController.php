@@ -18,7 +18,7 @@ class UserController extends Controller
     {
         $authUser = $request->user();
 
-        $query = User::with('roles', "sheetNumbers");
+        $query = User::with(['roles', 'sheetNumbers', 'dependency']);
 
         if ($authUser->hasRole("Instructor")) {
             // Get sheet IDs of the instructor
@@ -97,9 +97,9 @@ class UserController extends Controller
         $authUser = $request->user();
 
         if (!$authUser->hasRole("Admin") && !$authUser->hasRole("Aprendiz")) {
-            $user = User::role("Aprendiz")->with('roles', "sheetNumbers")->find($id);
+            $user = User::role("Aprendiz")->with(['roles', 'sheetNumbers', 'dependency'])->find($id);
         } else {
-            $user = User::with('roles', "sheetNumbers")->find($id);
+            $user = User::with(['roles', 'sheetNumbers', 'dependency'])->find($id);
         }
 
 
@@ -200,7 +200,7 @@ class UserController extends Controller
     {
         $search = $request->query('q');
         
-        $query = User::with('roles', "sheetNumbers");
+        $query = User::with(['roles', 'sheetNumbers', 'dependency']);
 
         if ($search) {
             $query->where(function($q) use ($search) {

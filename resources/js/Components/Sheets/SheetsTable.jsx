@@ -144,7 +144,7 @@ export default function SheetsTable({ sheets = [] }) {
                                     </td>
                                     <td className="py-4 px-4">
                                         <span className="text-sm text-gray-500">
-                                            20
+                                            {item.students_count || 0}
                                         </span>
                                     </td>
                                     <td className="py-4 px-4">

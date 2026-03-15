@@ -16,6 +16,7 @@ class comunication extends Model
 
     protected $fillable = [
         'pqr_id',
+        'parent_id',
         'message',
         'archived',
         'response_uuid',
@@ -23,6 +24,16 @@ class comunication extends Model
         'response_used',
         'requires_response'
     ];
+
+    public function parent()
+    {
+        return $this->belongsTo(comunication::class, 'parent_id');
+    }
+
+    public function children()
+    {
+        return $this->hasMany(comunication::class, 'parent_id');
+    }
 
     //Casts para campos boolean y fechas
     protected $casts = [

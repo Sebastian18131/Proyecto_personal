@@ -9,6 +9,8 @@ import {
     ArrowUturnLeftIcon,
     PaperAirplaneIcon,
 } from "@heroicons/react/24/outline";
+import { Link, usePage } from "@inertiajs/react";
+import { toast } from "sonner";
 
 export function MailReader() {
     const {
@@ -178,6 +180,44 @@ export function MailReader() {
                     </p>
                 </div>
 
+                {/* Assignment Area (Instructor/Admin only) */}
+                {(usePage().props.auth.user.roles[0].name === "Instructor" || usePage().props.auth.user.roles[0].name === "Admin") && (
+                    <div className="bg-primary/5 rounded-xl p-4 border border-primary/10">
+                        <h3 className="text-sm font-bold text-primary uppercase tracking-wide mb-3 flex items-center gap-2">
+                             Designar Dependencia
+                        </h3>
+                        <div className="flex flex-col sm:flex-row gap-3">
+                            <select 
+                                className="select select-bordered select-sm flex-1 bg-white"
+                                value={currentMail.dependency_id || ""}
+                                onChange={async (e) => {
+                                    const depId = e.target.value;
+                                    try {
+                                        await axios.patch(`/api/pqrs/${currentMail.id}`, {
+                                            dependency_id: depId
+                                        });
+                                        // Update local state
+                                        setMailCards(prev => prev.map(m => m.id === currentMail.id ? {...m, dependency_id: depId} : m));
+                                        toast.success("Dependencia asignada correctamente");
+                                    } catch (err) {
+                                        toast.error("Error al asignar dependencia");
+                                    }
+                                }}
+                            >
+                                <option value="">Seleccione una dependencia...</option>
+                                {usePage().props.dependencies?.map((dep) => (
+                                    <option key={dep.id} value={dep.id}>
+                                        {dep.name} {dep.code ? `(${dep.code})` : ""}
+                                    </option>
+                                ))}
+                            </select>
+                            <p className="text-[10px] text-gray-400 mt-1 sm:mt-0 sm:max-w-[200px]">
+                                Al asignar una dependencia, los aprendices vinculados a ella podrán visualizar este radicado.
+                            </p>
+                        </div>
+                    </div>
+                )}
+
                 {/* Attachments */}
                 <div>
                     <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
@@ -235,13 +275,12 @@ export function MailReader() {
                     />
                     <div className="flex justify-end mt-2">
                         {responseUrl ? (
-                            <a
-                                target="_blank"
+                            <Link
                                 href={responseUrl}
-                                className="mr-5"
+                                className="mr-5 text-primary hover:underline font-medium"
                             >
                                 Enlace de respuestas
-                            </a>
+                            </Link>
                         ) : (
                             ""
                         )}

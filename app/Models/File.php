@@ -13,10 +13,13 @@ class File extends Model
     protected $fillable = [
         'name',
         'path',
+        'hash',
+        'has_stamp',
         'extension',
         'mime_type',
         'size',
-        'folder_id'
+        'folder_id',
+        'active'
     ];
 
      public function folder()

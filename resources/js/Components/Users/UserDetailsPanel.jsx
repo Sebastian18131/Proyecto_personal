@@ -111,6 +111,18 @@ function UserDetailsPanel() {
                                 )}
                             </div>
                         </div>
+
+                        {roleName === "Aprendiz" && (
+                            <div className="sm:col-span-2 bg-gray-50 rounded-xl p-4">
+                                <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">
+                                    Dependencia
+                                </p>
+                                <div className="text-sm font-semibold text-gray-800">
+                                    {idSelected.dependency?.name || "Sin dependencia asignada"}
+                                    {idSelected.dependency?.code && ` (${idSelected.dependency.code})`}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
 

@@ -43,6 +43,7 @@ class DependencyController extends Controller
 
         $validate = $request->validate([
             "name" => "required|string|max:255|unique:dependencies,name",
+            "code" => "required|string|max:50",
             "sheet_number_id" => "nullable|exists:sheet_numbers,id"
         ]);
 
@@ -52,9 +53,12 @@ class DependencyController extends Controller
         // Prioridad: 1) Ficha del usuario, 2) Enviada en JSON
         if ($sheet) {
             $sheetId = $sheet->id;
+            $sheetNumber = $sheet->number;
         }
         elseif (isset($validate['sheet_number_id'])) {
             $sheetId = $validate['sheet_number_id'];
+            $sheetObj = \App\Models\Sheet_number::find($sheetId);
+            $sheetNumber = $sheetObj ? $sheetObj->number : '0000';
         }
         else {
             return response()->json([
@@ -63,14 +67,48 @@ class DependencyController extends Controller
             ], 422);
         }
 
-
         $dependency = Dependency::create([
             'name' => $validate['name'],
+            'code' => $validate['code'],
             'sheet_number_id' => $sheetId,
         ]);
 
+        // 🔹 Auto-create folder structure: Ficha > Año > Dependencia
+        try {
+            $year = date('Y');
+            
+            // 1. Root Ficha folder
+            $rootFolder = \App\Models\Folder::firstOrCreate([
+                'name' => $sheetNumber,
+                'parent_id' => null,
+                'sheet_number_id' => $sheetId,
+                'department' => 'Sistema'
+            ]);
+
+            // 2. Year folder
+            $yearFolder = \App\Models\Folder::firstOrCreate([
+                'name' => (string)$year,
+                'parent_id' => $rootFolder->id,
+                'sheet_number_id' => $sheetId,
+                'department' => 'Sistema',
+                'year' => $year
+            ]);
+
+            // 3. Dependency folder (Name + Code)
+            $depFolderName = $dependency->name . ' ' . $dependency->code;
+            \App\Models\Folder::firstOrCreate([
+                'name' => $depFolderName,
+                'parent_id' => $yearFolder->id,
+                'sheet_number_id' => $sheetId,
+                'department' => $dependency->name,
+                'folder_code' => $dependency->code
+            ]);
+        } catch (\Exception $e) {
+            \Log::error("Error creating folder structure: " . $e->getMessage());
+        }
+
         return response()->json([
-            "message" => "Dependencia creada con exito",
+            "message" => "Dependencia creada con exito y carpetas generadas",
             "dependency" => $dependency
         ], 200);
     }

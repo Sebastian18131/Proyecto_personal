@@ -29,11 +29,8 @@ use App\Models\Folder;
  */
 use App\Models\File;
 
-/**
- * Storage facade.
- * Used to interact with Laravel's filesystem abstraction.
- */
-use Storage;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Native PHP class used to create and manipulate ZIP files.
@@ -195,20 +192,30 @@ class FolderController extends Controller
             // Retrieve the folder where files will be uploaded
             $folder = Folder::find($folderId);
 
-            // Validar que no se suban archivos a años anteriores
-            $rootFolder = $folder;
-            while ($rootFolder->parent_id) {
-                $rootFolder = $rootFolder->parent;
-            }
-
-            $folderYear = $rootFolder->name;
-            $currentYear = date("Y");
-
-            if (is_numeric($folderYear) && strlen($folderYear) == 4 && $folderYear != $currentYear) {
+            if (!$folder) {
                 return response()->json([
                     "success" => false,
-                    "message" => "No se pueden subir archivos nuevos a carpetas de años anteriores ($folderYear)."
+                    "message" => "Folder not found"
+                ], 404);
+            }
+
+            // Validar que no se suban archivos a años anteriores o carpetas cerradas
+            if ($folder->is_closed) {
+                return response()->json([
+                    "success" => false,
+                    "message" => "Esta carpeta está cerrada y no permite más archivos."
                 ], 403);
+            }
+
+            $parent = $folder;
+            while ($parent) {
+                if ($parent->is_closed) {
+                    return response()->json([
+                        "success" => false,
+                        "message" => "La carpeta o una de sus carpetas superiores está cerrada."
+                    ], 403);
+                }
+                $parent = $parent->parent;
             }
 
             // Validate uploaded files (max 50MB each)
@@ -246,6 +253,7 @@ class FolderController extends Controller
                 $newFile = File::create([
                     "name" => $newName,
                     "path" => $path,
+                    "hash" => hash_file('sha256', Storage::disk('public')->path($path)),
                     "extension" => $file->getClientOriginalExtension(),
                     "mime_type" => $file->getClientMimeType(),
                     "size" => $file->getSize(),
@@ -312,14 +320,16 @@ class FolderController extends Controller
             ->where(function($q) use ($query) {
                 $q->where('name', 'LIKE', "%{$query}%")
                   ->orWhere('folder_code', 'LIKE', "%{$query}%")
-                  
+                  ->orWhere('department', 'LIKE', "%{$query}%")
+                  ->orWhere('year', 'LIKE', "%{$query}%");
             })
             ->get();
 
         $files = File::with('folder')->where('active', true)
             ->where(function($q) use ($query) {
                 $q->where('name', 'LIKE', "%{$query}%")
-                  ->orWhere('extension', 'LIKE', "%{$query}%");
+                  ->orWhere('extension', 'LIKE', "%{$query}%")
+                  ->orWhere('hash', 'LIKE', "%{$query}%");
             })
             ->get()
             ->map(fn($file) => [
@@ -329,8 +339,10 @@ class FolderController extends Controller
                 "size" => $file->size,
                 "url" => asset("storage/" . $file->path),
                 "folder_id" => $file->folder_id,
-                "folder_code" => $file->folder->folder_code,
-                
+                "folder_code" => $file->folder->folder_code ?? "--",
+                "department" => $file->folder->department ?? "--",
+                "created_at" => $file->created_at,
+                "updated_at" => $file->updated_at,
             ]);
 
         return response()->json([
@@ -578,5 +590,54 @@ class FolderController extends Controller
                 $zipPath . '/' . $child->name
             );
         }
+    }
+
+    /**
+     * Delete a single file by its ID (Logically).
+     */
+    public function destroyFile($fileId)
+    {
+        $file = File::findOrFail($fileId);
+        $file->update(['active' => false]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'File sent to trash'
+        ]);
+    }
+
+    /**
+     * Delete multiple folders or files at once.
+     * This method can reuse the deleteMixed logic.
+     */
+    /**
+     * Get the electronic index of documents.
+     */
+    public function electronicIndex(Request $request)
+    {
+        $query = File::with(['folder.sheetNumber'])
+            ->where('active', true);
+
+        if ($request->has('dependency_id')) {
+            $query->whereHas('folder', function($q) use ($request) {
+                $q->where('department', \App\Models\Dependency::find($request->dependency_id)->name ?? '');
+            });
+        }
+
+        $files = $query->get()->map(function($file) {
+            return [
+                'radicado' => $file->name, // Standardized name contains radicado info
+                'fecha' => $file->created_at->format('d/m/Y'),
+                'gestion' => $file->id,
+                'dependencia' => $file->folder->department ?? 'N/A',
+                'hash' => $file->hash ?? 'No calculado',
+                'url' => asset('storage/' . $file->path)
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'data' => $files
+        ]);
     }
 }

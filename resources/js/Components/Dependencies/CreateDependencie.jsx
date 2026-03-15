@@ -14,6 +14,7 @@ export default function CreateDependencie() {
     const { createDependency } = useContext(DependenciesContext);
 
     const [name, setName] = useState("");
+    const [code, setCode] = useState("");
     const [sheetNumber, setSheetNumber] = useState("");
     const [sheets, setSheets] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -38,6 +39,10 @@ export default function CreateDependencie() {
             toast.error("Ingrese el nombre de la dependencia");
             return;
         }
+        if (!code.trim()) {
+            toast.error("Ingrese el código de la dependencia");
+            return;
+        }
         if (!sheetNumber) {
             toast.error("Debe seleccionar una ficha");
             return;
@@ -47,11 +52,13 @@ export default function CreateDependencie() {
 
         const response = await createDependency({
             name: name.trim(),
+            code: code.trim(),
             sheet_number_id: Number(sheetNumber),
         });
 
         if (response.success) {
             setName("");
+            setCode("");
             setSheetNumber("");
             document.getElementById(MODAL_ID)?.close();
             toast.success("Dependencia creada exitosamente");
@@ -96,7 +103,20 @@ export default function CreateDependencie() {
                                 className="input input-bordered w-full"
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
-                                placeholder="Nombre de la dependencia"
+                                placeholder="Ej: Coordinación Académica"
+                            />
+                        </div>
+
+                        <div className="flex flex-col gap-1.5">
+                            <label className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                                Código (Sigla)
+                            </label>
+                            <input
+                                type="text"
+                                className="input input-bordered w-full font-mono uppercase"
+                                value={code}
+                                onChange={(e) => setCode(e.target.value)}
+                                placeholder="Ej: CAD"
                             />
                         </div>
 

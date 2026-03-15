@@ -16,11 +16,24 @@ class PdfController extends Controller
     {
         try {
             // Obtiene todos los datos enviados desde el formulario React
-            // Se convierte en un array asociativo con todos los campos
             $data = $request->all();
 
+            // Handle signature upload if present
+            if ($request->hasFile('signature')) {
+                $path = $request->file('signature')->store('signatures', 'public');
+                $data['firma_digital_path'] = $path;
+            }
+
             // Set the consecutive explicitly for SALIDA forms
-            $data['consecutivo'] = Radicado::getNextRadicado('salida');
+            $fichaNumber = $data['ficha'] ?? '0000';
+            $depCode = '0';
+            if (auth()->check()) {
+                $user = auth()->user();
+                $dep = \App\Models\Dependency::find($user->dependency_id);
+                $depCode = $dep ? ($dep->code ?? '0') : '0';
+            }
+            
+            $data['consecutivo'] = Radicado::getNextRadicado('salida', $fichaNumber, $depCode);
 
             // 🔹 Create a PQR record for this outgoing document for tracking
             \App\Models\PQR::create([

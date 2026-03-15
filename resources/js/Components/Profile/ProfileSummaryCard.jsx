@@ -99,11 +99,42 @@ const ProfileSummaryCard = ({ className = "" }) => {
                 </div>
             </div>
 
-            <div className="w-full rounded-xl bg-slate-50 px-3 py-2 text-center">
-                <h2 data-testid="user-email" className="text-sm font-semibold text-slate-900">
-                    {user.name}
-                </h2>
-                <p className="text-xs text-slate-500 break-all">{user.email}</p>
+            <div className="w-full rounded-xl bg-slate-50 px-3 py-2 text-center space-y-2">
+                <div>
+                    <h2 data-testid="user-email" className="text-sm font-semibold text-slate-900">
+                        {user.name}
+                    </h2>
+                    <p className="text-xs text-slate-500 break-all">{user.email}</p>
+                </div>
+
+                <div className="border-t border-slate-200 pt-2 space-y-2">
+                    {user.sheet_numbers?.length > 0 && (
+                        <div>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                                {user.roles?.[0]?.name === "Instructor" ? "Fichas Asignadas" : "Ficha"}
+                            </p>
+                            <div className="flex flex-wrap justify-center gap-1 mt-1">
+                                {user.sheet_numbers.map((item) => (
+                                    <span key={item.number} className="inline-flex items-center px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-bold">
+                                        {item.number}
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {user.dependency && (
+                        <div>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                                Dependencia
+                            </p>
+                            <p className="text-xs font-semibold text-slate-700">
+                                {user.dependency.name}
+                                {user.dependency.code && ` (${user.dependency.code})`}
+                            </p>
+                        </div>
+                    )}
+                </div>
             </div>
         </aside>
     );

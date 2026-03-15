@@ -19,8 +19,12 @@ class SheetController extends Controller
      */
     public function index()
     {
-        // Load all sheets with their related users
-        $sheets = Sheet_number::with('users')->get();
+        // Load all sheets with their related students count
+        $sheets = Sheet_number::withCount(['users as students_count' => function ($query) {
+            $query->whereHas('roles', function ($q) {
+                $q->where('name', 'Aprendiz');
+            });
+        }])->get();
 
         
         return response()->json([
@@ -72,8 +76,12 @@ class SheetController extends Controller
      */
     public function show(string $id)
     {
-        // Search sheet(s) by partial sheet number
-        $sheet = Sheet_number::find($id);
+        // Search sheet and include students count
+        $sheet = Sheet_number::withCount(['users as students_count' => function ($query) {
+            $query->whereHas('roles', function ($q) {
+                $q->where('name', 'Aprendiz');
+            });
+        }])->find($id);
 
         if (!$sheet) {
             return response()->json([

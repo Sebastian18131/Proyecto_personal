@@ -89,7 +89,19 @@ class PQRController extends Controller
                   ->orWhere('description', 'LIKE', "%{$search}%")
                   ->orWhere('recipient', 'LIKE', "%{$search}%")
                   ->orWhere('request_type', 'LIKE', "%{$search}%")
-                  ->orWhere('id', 'LIKE', "%{$search}%");
+                  ->orWhere('response_status', 'LIKE', "%{$search}%")
+                  ->orWhere('id', 'LIKE', "%{$search}%")
+                  ->orWhereHas('creator', function($sub) use ($search) {
+                      $sub->where('name', 'LIKE', "%{$search}%")
+                          ->orWhere('email', 'LIKE', "%{$search}%");
+                  })
+                  ->orWhereHas('dependency', function($sub) use ($search) {
+                      $sub->where('name', 'LIKE', "%{$search}%")
+                          ->orWhere('code', 'LIKE', "%{$search}%");
+                  })
+                  ->orWhereHas('responsible', function($sub) use ($search) {
+                      $sub->where('name', 'LIKE', "%{$search}%");
+                  });
             });
         }
 
@@ -157,7 +169,11 @@ class PQRController extends Controller
         }
 
         $pqr = PQR::create([
-            'radicado' => Radicado::getNextRadicado('entrada'),
+            'radicado' => Radicado::getNextRadicado(
+                'entrada', 
+                $sheetNumber->number, 
+                $targetDependencyId ? (Dependency::find($targetDependencyId)->code ?? '0') : '0'
+            ),
             'type' => 'entrada',
             'year' => date('Y'),
             'sender_name' => $validated['sender_name'],
@@ -261,11 +277,18 @@ class PQRController extends Controller
 
         // 🔹 Restrict editing for "entrada" type (except for Admin)
         if ($pqr->type === 'entrada' && !$request->user()->hasRole('Admin')) {
-            // Only allow archived and state
-            $validated = Arr::only($validated, ['archived', 'state']);
+            // Allow Instructors to designate dependency and responsible
+            $allowedFields = ['archived', 'state'];
+            if ($request->user()->hasRole('Instructor')) {
+                $allowedFields[] = 'dependency_id';
+                $allowedFields[] = 'responsible_id';
+            }
+            
+            $validated = Arr::only($validated, $allowedFields);
+            
             if (empty($validated)) {
                 return response()->json([
-                    'message' => 'Las PQRs de entrada no pueden ser editadas, solo archivadas.'
+                    'message' => 'Las PQRs de entrada no pueden ser editadas, solo archivadas o asignadas.'
                 ], 403);
             }
         }
@@ -450,6 +473,36 @@ class PQRController extends Controller
             Log::error('Error finalizando PQR: ' . $e->getMessage());
             return response()->json(['error' => 'Error interno del servidor: ' . $e->getMessage()], 500);
         }
+    }
 
+    /**
+     * Get PQR statistics and alerts
+     */
+    public function getStats(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $query = PQR::query();
+
+        if ($user->hasRole('Dependencia')) {
+            $query->where('dependency_id', $user->dependency_id);
+        }
+
+        $now = now();
+        $threeDaysFromNow = now()->addDays(3);
+
+        $stats = [
+            'total' => $query->count(),
+            'pending' => (clone $query)->where('response_status', 'pending')->count(),
+            'responded' => (clone $query)->where('response_status', 'responded')->count(),
+            'closed' => (clone $query)->where('response_status', 'closed')->count(),
+            'expired' => (clone $query)->where('response_status', 'pending')
+                ->where('response_time', '<', $now->toDateString())
+                ->count(),
+            'nearing_expiry' => (clone $query)->where('response_status', 'pending')
+                ->whereBetween('response_time', [$now->toDateString(), $threeDaysFromNow->toDateString()])
+                ->count(),
+        ];
+
+        return response()->json(['success' => true, 'stats' => $stats]);
     }
 }

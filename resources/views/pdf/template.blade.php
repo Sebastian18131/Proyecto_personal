@@ -2,221 +2,147 @@
 <html lang="es">
 <head>
     <meta charset="utf-8">
-    <title>Comunicación Oficial</title>
+    <title>{{ $data['tipo_documento'] ?? 'Comunicación Oficial' }}</title>
     <style>
-        /* Optimización para PDF */
-        @page {
-            margin: 2cm;
-        }
+        @page { margin: 2cm; }
         body {
             font-family: 'Helvetica', 'Arial', sans-serif;
             font-size: 11pt;
-            line-height: 1.6;
+            line-height: 1.4;
             color: #1a1a1a;
             margin: 0;
             padding: 0;
         }
-
-        .header-container {
-            width: 100%;
-            height: 80px;
-            margin-bottom: 20px;
-        }
-
-        .logo {
-            float: left;
-            width: 80px;
-            height: 80px;
-        }
-
+        .header-container { width: 100%; margin-bottom: 30px; }
+        .logo { float: left; width: 100px; max-height: 100px; object-fit: contain; }
         .header-text {
-            float: left;
-            width: 60%;
-            padding-left: 20px;
-            padding-top: 15px;
-            font-size: 10pt;
+            float: right;
+            width: 70%;
+            text-align: right;
+            font-size: 9pt;
             color: #555;
         }
-
-        /* Barra decorativa superior (basada en la imagen) */
-        .top-bar {
-            width: 100%;
-            height: 15px;
-            margin-bottom: 40px;
-        }
-        .bar-SenaGreen { width: 30%; height: 100%; background-color: #0FB849; float: left; }
-        .bar-blue { width: 40%; height: 100%; background-color: #2c3e50; float: left; }
-        .bar-SenaGreen-right { width: 30%; height: 100%; background-color: #0FB849; float: left; }
-
-        /* Título Principal */
-        .main-title {
-            text-align: right;
-            font-weight: bold;
-            font-size: 12pt;
-            margin-bottom: 10px;
-            clear: both;
-        }
-
-        .radicado {
-            text-align: right;
-            font-size: 12pt;
-            font-weight: bold;
-            margin-bottom: 30px;
-        }
-
-        /* Bloques de sección */
-        .section {
-            margin-bottom: 20px;
-        }
-
-        .label {
-            font-weight: bold;
-            display: block;
-        }
-
-        .line {
-            display: block;
-        }
-
-        /* Contenedor de datos del destinatario */
-        .destinatario {
-            margin: 30px 0;
-        }
-
-        /* Área de texto justificada */
-        .text-content {
-            text-align: justify;
-            margin-top: 15px;
-            margin-bottom: 30px;
-        }
-
-        /* Estructura de Firma al pie */
-        .signature-container {
-            margin-top: 60px;
-            width: 100%;
-        }
-        .signature-line {
+        .radicado-box {
+            border: 1px solid #000;
+            padding: 10px;
             width: 250px;
-            border-top: 1px solid #000;
-            padding-top: 5px;
+            float: right;
+            margin-bottom: 20px;
+            font-size: 9pt;
+            text-align: center;
         }
-
-        .footer-notes {
-            margin-top: 40px;
-            font-size: 10pt;
-        }
-
-        .clearfix::after {
-            content: "";
+        .qr-code { width: 80px; height: 80px; margin-bottom: 5px; }
+        .main-title {
+            text-align: center;
+            font-weight: bold;
+            font-size: 14pt;
+            margin: 40px 0 20px 0;
             clear: both;
-            display: table;
+            text-transform: uppercase;
         }
-
-        .footer{
-            text-align: center; 
-            font-size: 10pt; 
-            color: #555;
+        .info-grid { width: 100%; margin-bottom: 20px; border-collapse: collapse; }
+        .info-grid td { padding: 5px 0; vertical-align: top; }
+        .label { font-weight: bold; }
+        .text-content { text-align: justify; margin: 30px 0; min-height: 200px; }
+        .signature-section { margin-top: 50px; }
+        .signature-img { width: 150px; height: auto; margin-bottom: 5px; }
+        .signature-line { width: 250px; border-top: 1px solid #000; padding-top: 5px; }
+        .footer {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            text-align: center;
+            font-size: 8pt;
+            color: #777;
+            border-top: 1px solid #eee;
+            padding-top: 10px;
         }
+        .clearfix::after { content: ""; clear: both; display: table; }
+        
+        /* Reduced farewell lines */
+        .farewell { margin-top: 20px; line-height: 1.2; }
     </style>
 </head>
 <body>
 
     <div class="header-container clearfix">
-        <!-- Logo (Replace with appropriate base64 or absolute path in production if available) -->
-        <!-- Usa un logo local si está disponible en public/images/sena-logo.png -->
-        <img src="{{ public_path('images/sena-logo.png') }}" alt="Logo SENA" class="logo" onerror="this.style.display='none'">
-        <div class="header-text">
-            SENA - Servicio Nacional de Aprendizaje<br>
-            Centro de Comercio y Servicios - Regional Pereira<br>
-            Sistema de Gestión Documental
+        @php
+            $logo = \App\Models\Setting::get('company_logo');
+            $logoPath = $logo ? public_path('storage/' . $logo) : public_path('images/sena-logo.png');
+        @endphp
+        <img src="{{ $logoPath }}" alt="Logo" class="logo">
+        
+        <div class="radicado-box">
+            @if(isset($data['radicado']) || isset($data['consecutivo']))
+                @php
+                    $radNumber = $data['radicado'] ?? $data['consecutivo'];
+                    $qrUrl = url('/v/' . base64_encode($radNumber));
+                    $qrSource = "https://chart.googleapis.com/chart?chs=150x150&cht=qr&chl=" . urlencode($qrUrl) . "&choe=UTF-8";
+                @endphp
+                <img src="{{ $qrSource }}" class="qr-code" alt="QR"><br>
+                <strong>RADICADO No: {{ $radNumber }}</strong><br>
+                Fecha: {{ $data['fecha'] ?? date('d/m/Y') }}
+            @endif
         </div>
     </div>
 
-    <!-- Si pasamos el radicado o consecutivo que lo muestre -->
-    @if(isset($data['radicado']))
-    <div class="radicado">
-        Radicado: {{ $data['radicado'] }}
-    </div>
-    @endif
-    
-    @if(isset($data['consecutivo']))
-    <div class="radicado" style="margin-top: -20px;">
-        Consecutivo: {{ $data['consecutivo'] }}
-    </div>
-    @endif
-
     <div class="main-title">
-        {{ $data['tipo_documento'] ?? 'Comunicación Oficial' }}
+        {{ $data['tipo_documento'] ?? 'Comunicación' }}
     </div>
 
-    <div class="section">
-        <div class="line">Código de acta: {{ $data['codigo'] ?? 'S/N' }}</div>
-        <div class="label">Lugar y fecha de elaboración</div>
-        <div class="line">{{ $data['lugar'] ?? '' }}</div>
-        <div class="line">{{ $data['fecha'] ?? '' }}</div>
-    </div>
+    <table class="info-grid">
+        <tr>
+            <td width="50%">
+                <span class="label">Lugar:</span> {{ $data['lugar'] ?? 'Pereira' }}<br>
+                <span class="label">Fecha:</span> {{ $data['fecha'] ?? date('d/m/Y') }}<br>
+                <span class="label">Dependencia:</span> {{ $data['dependencia_name'] ?? '' }}
+            </td>
+            <td width="50%">
+                <span class="label">Serie:</span> {{ $data['serie'] ?? '' }}<br>
+                <span class="label">Subserie:</span> {{ $data['subserie'] ?? '' }}<br>
+                <span class="label">Código Acta:</span> {{ $data['codigo'] ?? 'N/A' }}
+            </td>
+        </tr>
+    </table>
 
-    <div class="destinatario">
+    <div class="destinatario" style="margin-top: 20px;">
         <div class="line">{{ $data['tratamiento'] ?? '' }}</div>
-        <div class="label">{{ $data['nombres'] ?? '' }}</div>
+        <div class="label" style="font-size: 12pt;">{{ $data['nombres'] ?? '' }}</div>
         <div class="line">{{ $data['cargo'] ?? '' }}</div>
         <div class="line">{{ $data['empresa'] ?? '' }}</div>
-        <div class="line">{{ $data['direccion'] ?? '' }}</div>
         <div class="line">{{ $data['ciudad'] ?? '' }}</div>
     </div>
 
-    <div class="section">
-        <span class="label" style="display: inline;">Asunto:</span>
-        <span>{{ $data['asunto'] ?? '' }}</span>
+    <div style="margin-top: 30px;">
+        <span class="label">Asunto:</span> {{ $data['asunto'] ?? '' }}
     </div>
 
-    <div class="section">
-        <div class="line">{{ $data['saludo'] ?? '' }}</div>
-        <div class="text-content">
-            {!! nl2br(e($data['texto'] ?? '')) !!}
-        </div>
+    <div class="text-content">
+        <div style="margin-bottom: 20px;">{{ $data['saludo'] ?? 'Cordial saludo,' }}</div>
+        {!! nl2br(e($data['texto'] ?? '')) !!}
     </div>
 
-    <div class="section">
-        <div class="line">{{ $data['despedida1'] ?? '' }}</div>
-        <div class="line">{{ $data['despedida2'] ?? '' }}</div>
-        <div class="line">{{ $data['despedida3'] ?? '' }}</div>
+    <div class="farewell">
+        {{ $data['despedida'] ?? 'Atentamente,' }}
     </div>
 
-    <div class="signature-container">
-        <div style="margin-bottom: 5px;">
-            <img src="{{ public_path('images/signature-placeholder.png') }}" alt="Firma" style="width: 200px; height: 60px;" onerror="this.style.display='none'">
-        </div>
+    <div class="signature-section">
+        @if(isset($data['firma_digital_path']))
+            <img src="{{ public_path('storage/' . $data['firma_digital_path']) }}" class="signature-img">
+        @endif
         <div class="signature-line">
             <div class="label">{{ $data['firma_nombres'] ?? '' }}</div>
             <div class="line">{{ $data['firma_cargo'] ?? '' }}</div>
         </div>
     </div>
 
-    <div class="footer-notes">
-        @if(!empty($data['anexo']))
-            <div><strong>Anexo:</strong> {{ $data['anexo'] }}</div>
-        @endif
-        @if(!empty($data['copia']))
-            <div><strong>Copia:</strong> {{ $data['copia'] }}</div>
-        @endif
-        @if(!empty($data['transcriptor']))
-            <div style="margin-top: 10px;"><strong>Transcriptor:</strong> {{ $data['transcriptor'] }}</div>
-        @endif
-    </div>
-
-    <!-- <div class="top-bar clearfix">
-        <div class="bar-SenaGreen"></div>
-        <div class="bar-blue"></div>
-        <div class="bar-SenaGreen-right"></div>
-    </div> -->
-    <br>
     <div class="footer">
-        <div>
-            SENA - Centro de comercio y servicios - Area de gestion documental<br>
-            &copy; Gedocs {{ date('Y') }} Todos los derechos reservados.
-        </div>
+        {!! \App\Models\Setting::get('footer_text', 'SENA - Servicio Nacional de Aprendizaje. Regional Risaralda.') !!}
+        <br>
+        &copy; Gedocs {{ date('Y') }}
     </div>
 
 </body>
+</html>
+y>
 </html>

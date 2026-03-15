@@ -185,7 +185,8 @@ class CommunicationController extends Controller
             $responseComunication = $pqr->comunications()->create([
                 'message' => $validated['message'],
                 'requires_response' => false,
-                'is_user_response' => true,
+                'sender_type' => 'user',
+                'parent_id' => $comunication->id, // Threading
             ]);
 
             // Guardar archivos si los hay
@@ -205,6 +206,32 @@ class CommunicationController extends Controller
 
             // Marcar el UUID como usado
             $comunication->markResponseAsUsed();
+
+            // 🔹 Generar PDF automático para la respuesta (Requirement 2.1)
+            try {
+                $pdfData = [
+                    'tipo_documento' => 'Respuesta a Comunicación',
+                    'radicado' => $pqr->radicado,
+                    'fecha' => now()->format('d/m/Y'),
+                    'nombres' => $pqr->sender_name,
+                    'asunto' => 'Respuesta a radicado: ' . $pqr->radicado,
+                    'texto' => $validated['message'],
+                ];
+                $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.template', ['data' => $pdfData]);
+                $pdfPath = 'responses/response_' . $responseComunication->id . '.pdf';
+                \Illuminate\Support\Facades\Storage::disk('public')->put($pdfPath, $pdf->output());
+                
+                // Guardar el PDF como un adjunto de la respuesta
+                $responseComunication->attachedSupports()->create([
+                    'name' => 'Respuesta_Generada.pdf',
+                    'path' => $pdfPath,
+                    'type' => 'pdf',
+                    'size' => \Illuminate\Support\Facades\Storage::disk('public')->size($pdfPath),
+                    'pqr_id' => $pqr->id,
+                ]);
+            } catch (\Exception $pdfEx) {
+                \Log::error('Error generating response PDF: ' . $pdfEx->getMessage());
+            }
 
             DB::commit();
 

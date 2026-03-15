@@ -11,6 +11,7 @@ class Dependency extends Model
 
     protected $fillable = [
         'name',
+        'code',
         'sheet_number_id'
     ];
 
