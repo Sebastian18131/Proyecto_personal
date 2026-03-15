@@ -39,7 +39,15 @@ export default function ArchiveTable() {
             mail.affair?.toLowerCase().includes(lowerSearch) ||
             mail.description?.toLowerCase().includes(lowerSearch) ||
             mail.id?.toString().includes(lowerSearch) ||
-            mail.sender_name?.toLowerCase().includes(lowerSearch)
+            mail.sender_name?.toLowerCase().includes(lowerSearch) ||
+            mail.radicado?.toLowerCase().includes(lowerSearch) ||
+            mail.recipient?.toLowerCase().includes(lowerSearch) ||
+            mail.request_type?.toLowerCase().includes(lowerSearch) ||
+            mail.email?.toLowerCase().includes(lowerSearch) ||
+            mail.document?.toLowerCase().includes(lowerSearch) ||
+            mail.document_type?.toLowerCase().includes(lowerSearch) ||
+            mail.response_status?.toLowerCase().includes(lowerSearch) ||
+            mail.year?.toString().includes(lowerSearch)
         );
         setFilteredMails(filtered);
     }, [searchTerm, mails]);

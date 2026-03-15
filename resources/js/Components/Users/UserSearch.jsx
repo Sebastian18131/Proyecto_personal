@@ -18,10 +18,19 @@ function UserSearch({ url }) {
 
     const [openDrodown, setOpenDropdown] = useState(false);
 
+    useEffect(() => {
+        if (!filterSelected) {
+            setFilterSelected("all");
+        }
+    }, [filterSelected]);
+
     const filterLabels = {
+        all: "Todos los campos",
         name: "Nombre",
         document_number: "Identificación",
         email: "Email",
+        status: "Estado",
+        type_document: "Tipo doc",
     };
 
     useEffect(() => {

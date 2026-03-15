@@ -44,25 +44,20 @@ const InformationDrawer = () => {
                             </div>
                         </div>
 
-                        {!selectedItem?.extension &&
-                            <>
-                                <div className="grid grid-cols-3">
-                                    <div className="font-bold">Código</div>
-                                    <div className="col-span-2 ">
-                                        {selectedItem?.folder_code ?? "--"}
-                                    </div>
-                                </div>
+                        <div className="grid grid-cols-3">
+                            <div className="font-bold">Código</div>
+                            <div className="col-span-2 ">
+                                {selectedItem?.folder_code ?? "--"}
+                            </div>
+                        </div>
 
 
-                                <div className="grid grid-cols-3">
-                                    <div className="font-bold">Clasificación</div>
-                                    <div className="col-span-2 ">
-                                        {selectedItem?.department ?? "--"}
-                                    </div>
-                                </div>
-                            </>
-
-                        }
+                        <div className="grid grid-cols-3">
+                            <div className="font-bold">Clasificación</div>
+                            <div className="col-span-2 ">
+                                {selectedItem?.department ?? "--"}
+                            </div>
+                        </div>
 
 
                         <div className="grid grid-cols-3">

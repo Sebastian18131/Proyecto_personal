@@ -28,6 +28,7 @@ export default function InboxSidebar() {
         { label: "Quejas", value: "Queja" },
         { label: "Reclamos", value: "Reclamo" },
         { label: "Sugerencias", value: "Sugerencia" },
+        { label: "Otros", value: "Otros" },
     ];
 
     const currentMonthYear = new Intl.DateTimeFormat("es-ES", {
@@ -70,22 +71,45 @@ export default function InboxSidebar() {
                     </div>
                     
                     <div className="flex gap-2 w-full">
-                        <select 
-                            className="select select-sm bg-gray-100 border-none focus:outline-none rounded-md flex-1"
-                            value={typeFilter}
-                            onChange={(e) => setTypeFilter(e.target.value)}
-                        >
-                            <option value="">Todos los tipos</option>
-                            <option value="entrada">Entrada (RE)</option>
-                            <option value="salida">Salida (ENV)</option>
-                        </select>
+                        <div className="flex bg-gray-100 p-1 rounded-lg flex-1">
+                            <button
+                                onClick={() => setTypeFilter("entrada")}
+                                className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all ${
+                                    typeFilter === "entrada"
+                                        ? "bg-white text-primary shadow-sm"
+                                        : "text-gray-500 hover:text-gray-700"
+                                }`}
+                            >
+                                Recibidos
+                            </button>
+                            <button
+                                onClick={() => setTypeFilter("salida")}
+                                className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all ${
+                                    typeFilter === "salida"
+                                        ? "bg-white text-primary shadow-sm"
+                                        : "text-gray-500 hover:text-gray-700"
+                                }`}
+                            >
+                                Enviados
+                            </button>
+                            <button
+                                onClick={() => setTypeFilter("")}
+                                className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all ${
+                                    typeFilter === ""
+                                        ? "bg-white text-primary shadow-sm"
+                                        : "text-gray-500 hover:text-gray-700"
+                                }`}
+                            >
+                                Todos
+                            </button>
+                        </div>
                         
                         <select 
-                            className="select select-sm bg-gray-100 border-none focus:outline-none rounded-md flex-1"
+                            className="select select-sm bg-gray-100 border-none focus:outline-none rounded-md w-1/3"
                             value={yearFilter}
                             onChange={(e) => setYearFilter(e.target.value)}
                         >
-                            <option value="">Todos los años</option>
+                            <option value="">Año</option>
                             {[...new Set(useContext(MailContext).mailCards.map(m => m.year).filter(y => y))].sort((a,b) => b-a).map(year => (
                                 <option key={year} value={year}>{year}</option>
                             ))}

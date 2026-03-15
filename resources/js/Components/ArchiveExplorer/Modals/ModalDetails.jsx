@@ -70,7 +70,7 @@ export const ModalDetails = () => {
             <span className="font-medium">Clasificación:</span>{" "}
             {currentFolder?.department || selectedItem?.department || "--"}
           </p>
-          {selectedItem?.extemsion &&
+          {selectedItem?.extension &&
             <>
               <p>
                 <span className="font-medium">Tamaño:</span>{" "}

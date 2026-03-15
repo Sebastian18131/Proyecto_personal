@@ -80,6 +80,19 @@ class PQRController extends Controller
             $query->where('recipient', 'LIKE', '%' . $request->query('recipient') . '%');
         }
 
+        if ($request->has('q')) {
+            $search = $request->query('q');
+            $query->where(function($q) use ($search) {
+                $q->where('radicado', 'LIKE', "%{$search}%")
+                  ->orWhere('sender_name', 'LIKE', "%{$search}%")
+                  ->orWhere('affair', 'LIKE', "%{$search}%")
+                  ->orWhere('description', 'LIKE', "%{$search}%")
+                  ->orWhere('recipient', 'LIKE', "%{$search}%")
+                  ->orWhere('request_type', 'LIKE', "%{$search}%")
+                  ->orWhere('id', 'LIKE', "%{$search}%");
+            });
+        }
+
         $pqrs = $query->get();
 
         return response()->json([
@@ -100,7 +113,7 @@ class PQRController extends Controller
             'sender_name' => 'required|string|max:255',
             'description' => 'required|string|max:1000',
             'affair' => 'required|string|max:255',
-            'request_type' => 'required|string|in:Peticion,Queja,Reclamo,Sugerencia',
+            'request_type' => 'required|string|in:Peticion,Queja,Reclamo,Sugerencia,Otros',
             'response_time' => 'nullable|date|after_or_equal:today',
             'response_days' => 'nullable|in:10,15,30',
             'number' => 'required|string',

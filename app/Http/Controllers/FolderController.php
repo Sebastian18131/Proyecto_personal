@@ -107,7 +107,7 @@ class FolderController extends Controller
         $files = $folder->files()
             ->where('active', true)
             ->get()
-            ->map(function ($file) {
+            ->map(function ($file) use ($folder) {
                 return [
                     "id" => $file->id,
                     "name" => $file->name,
@@ -118,6 +118,7 @@ class FolderController extends Controller
                     "is_pdf" => $file->extension === "pdf",
                     "created_at" => $file->created_at,
                     "updated_at" => $file->updated_at,
+                    "folder_code" => $folder->folder_code,
                 ];
             });
 
@@ -265,6 +266,8 @@ class FolderController extends Controller
                     "created_at" => $newFile->created_at,
                     "updated_at" => $newFile->updated_at,
                     "url" => asset("storage/" . $newFile->path),
+                    "folder_code" => $folder->folder_code,
+                    
                 ];
 
             }
@@ -306,11 +309,18 @@ class FolderController extends Controller
         }
 
         $folders = Folder::where('active', true)
-            ->where('name', 'LIKE', "%{$query}%")
+            ->where(function($q) use ($query) {
+                $q->where('name', 'LIKE', "%{$query}%")
+                  ->orWhere('folder_code', 'LIKE', "%{$query}%")
+                  
+            })
             ->get();
 
-        $files = File::where('active', true)
-            ->where('name', 'LIKE', "%{$query}%")
+        $files = File::with('folder')->where('active', true)
+            ->where(function($q) use ($query) {
+                $q->where('name', 'LIKE', "%{$query}%")
+                  ->orWhere('extension', 'LIKE', "%{$query}%");
+            })
             ->get()
             ->map(fn($file) => [
                 "id" => $file->id,
@@ -318,7 +328,9 @@ class FolderController extends Controller
                 "extension" => $file->extension,
                 "size" => $file->size,
                 "url" => asset("storage/" . $file->path),
-                "folder_id" => $file->folder_id
+                "folder_id" => $file->folder_id,
+                "folder_code" => $file->folder->folder_code,
+                
             ]);
 
         return response()->json([

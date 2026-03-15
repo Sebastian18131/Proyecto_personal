@@ -1,14 +1,16 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useState, useMemo } from "react";
 import { DependenciesContext } from "@/context/DependenciesContext/DependenciesContext";
 import CreateDependencie from "./CreateDependencie";
 import UpdateDependencie from "./UpdateDependencie";
 import DeleteDependencie from "./DeleteDependencie";
 import api from "@/lib/axios";
-import { ArrowPathIcon, BuildingOffice2Icon } from "@heroicons/react/24/outline";
+import { ArrowPathIcon, BuildingOffice2Icon, MagnifyingGlassIcon } from "@heroicons/react/24/outline";
+import { XMarkIcon } from "@heroicons/react/24/solid";
 
 export default function DependenciesSettingsSection() {
     const [sheets, setSheets] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [searchTerm, setSearchTerm] = useState("");
 
     const { dependencies, fetchDependencies } = useContext(DependenciesContext);
 
@@ -37,6 +39,20 @@ export default function DependenciesSettingsSection() {
         return sheet ? sheet.number : "";
     };
 
+    const filteredDependencies = useMemo(() => {
+        const term = searchTerm.toLowerCase().trim();
+        if (!term) return dependencies;
+
+        return dependencies.filter((dep) => {
+            const sheetNumber = getSheetNumber(dep.sheet_number_id).toString();
+            return (
+                dep.name?.toLowerCase().includes(term) ||
+                sheetNumber.includes(term) ||
+                dep.id?.toString().includes(term)
+            );
+        });
+    }, [searchTerm, dependencies, sheets]);
+
     if (loading) {
         return (
             <div className="flex h-64 items-center justify-center">
@@ -51,28 +67,44 @@ export default function DependenciesSettingsSection() {
     return (
         <div className="flex flex-col gap-5">
             {/* Header */}
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                    <BuildingOffice2Icon className="size-5 text-slate-500" />
-                    <h2 className="text-base font-semibold text-slate-800">Dependencias</h2>
-                    {dependencies.length > 0 && (
-                        <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
-                            {dependencies.length}
-                        </span>
-                    )}
+            <div className="flex flex-col gap-4">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <BuildingOffice2Icon className="size-5 text-slate-500" />
+                        <h2 className="text-base font-semibold text-slate-800">Dependencias</h2>
+                        {dependencies.length > 0 && (
+                            <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
+                                {dependencies.length}
+                            </span>
+                        )}
+                    </div>
                 </div>
-                <CreateDependencie />
+
+                <div className="flex flex-col sm:flex-row gap-4 justify-between items-stretch sm:items-center">
+                    <div className="flex items-center bg-white border border-gray-300 px-3 py-2 rounded-lg flex-1 md:max-w-md shadow-sm focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/20 transition-all">
+                        <MagnifyingGlassIcon className="size-5 text-gray-500 mr-2 shrink-0" />
+                        <input
+                            placeholder="Buscar por nombre o ficha..."
+                            type="text"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="bg-transparent border-none focus:outline-none w-full text-sm"
+                        />
+                        {searchTerm && (
+                            <XMarkIcon
+                                className="size-5 text-gray-400 hover:text-gray-600 cursor-pointer shrink-0"
+                                onClick={() => setSearchTerm("")}
+                            />
+                        )}
+                    </div>
+                    <CreateDependencie />
+                </div>
             </div>
 
             {/* List */}
-            {dependencies.length === 0 ? (
-                <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-slate-200 bg-slate-50 py-16 text-center">
-                    <BuildingOffice2Icon className="size-10 text-slate-300" />
-                    <p className="text-sm text-slate-400">No hay dependencias registradas</p>
-                </div>
-            ) : (
-                <div className="flex flex-col gap-2">
-                    {dependencies.map((dependency) => (
+            <div className="flex flex-col gap-2">
+                {filteredDependencies.length > 0 ? (
+                    filteredDependencies.map((dependency) => (
                         <div
                             key={dependency.id}
                             className="collapse collapse-arrow rounded-xl border border-slate-200 bg-white shadow-sm"
@@ -96,9 +128,18 @@ export default function DependenciesSettingsSection() {
                                 </div>
                             </div>
                         </div>
-                    ))}
-                </div>
-            )}
+                    ))
+                ) : (
+                    <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-slate-200 bg-slate-50 py-16 text-center">
+                        <MagnifyingGlassIcon className="size-10 text-slate-300" />
+                        <p className="text-sm text-slate-400">
+                            {searchTerm 
+                                ? `No se encontraron resultados para "${searchTerm}"`
+                                : "No hay dependencias registradas"}
+                        </p>
+                    </div>
+                )}
+            </div>
         </div>
     );
 }

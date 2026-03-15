@@ -101,16 +101,17 @@ export function UserProvider({ children }) {
             return;
         }
 
-        if (!searcher || !filter) {
-            return;
+        setIsSearching(true);
+        setLoadingSearch(true);
+
+        let url = `/api/users/search/filter`;
+        if (filter && filter !== "all") {
+            url += `?${filter}=${searcher}`;
+        } else {
+            url += `?q=${searcher}`;
         }
 
-            setIsSearching(true);
-            setLoadingSearch(true);
-
-            const res = await api.get(
-                `/api/users/search/filter?${filter}=${searcher}`
-            );
+        const res = await api.get(url);
 
             if (res.data.success === false) {
                 console.log("ERROR AL FILTRAR");

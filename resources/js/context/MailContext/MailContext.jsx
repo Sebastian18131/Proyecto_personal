@@ -50,7 +50,13 @@ export function MailProvider({ children }) {
             card.radicado?.toLowerCase().includes(searchTerm.toLowerCase()) ||
             card.recipient?.toLowerCase().includes(searchTerm.toLowerCase()) ||
             card.sender_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            card.id?.toString().includes(searchTerm);
+            card.id?.toString().includes(searchTerm) ||
+            card.request_type?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            card.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            card.document?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            card.document_type?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            card.response_status?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            card.year?.toString().includes(searchTerm);
 
         let matchesScope = true;
         if (activeScopeFilter) {

@@ -198,31 +198,25 @@ class UserController extends Controller
 
     public function userByFilter(Request $request)
     {
-        if (!$request->query()) {
-            return response()->json([
-                "success" => false,
-                "message" => "No hay filtro seleccionado"
-            ]);
-        }
-        // Allowed filters
-        $allowed = ["name", "email", "document_number"];
-
-        // Validate if the used filter is allowed
-        foreach ($request->query() as $key => $value) {
-            if (!in_array($key, $allowed)) {
-                return response()->json([
-                    "success" => false,
-                    "message" => "Filtro '$key' no está permitido"
-                ], 400);
-            }
-        }
-
-        // loop through the array allowed to search for each selected filter
-
+        $search = $request->query('q');
+        
         $query = User::with('roles', "sheetNumbers");
 
-        foreach ($request->query() as $key => $value) {
-            $query->where($key, "LIKE", "%{$value}%");
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'LIKE', "%{$search}%")
+                  ->orWhere('email', 'LIKE', "%{$search}%")
+                  ->orWhere('document_number', 'LIKE', "%{$search}%")
+                  ->orWhere('status', 'LIKE', "%{$search}%")
+                  ->orWhere('type_document', 'LIKE', "%{$search}%");
+            });
+        } else {
+            // Support individual filters if needed (legacy)
+            foreach ($request->query() as $key => $value) {
+                if (in_array($key, ["name", "email", "document_number", "status", "type_document"])) {
+                    $query->where($key, "LIKE", "%{$value}%");
+                }
+            }
         }
 
         $authUser = $request->user();
@@ -230,7 +224,6 @@ class UserController extends Controller
         if (!$authUser->hasRole("Admin")) {
             $query->role("Aprendiz");
         }
-
 
         $users = $query->get();
 
